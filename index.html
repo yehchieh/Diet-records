@@ -251,10 +251,31 @@ html[data-theme="dark"] .btn.solid{color:var(--on-accent)}
   padding:12px 20px calc(12px + env(safe-area-inset-bottom));
 }
 .savebar .inner{max-width:660px;margin:0 auto;display:flex;align-items:center;gap:10px}
-.status{font-family:var(--mono);font-size:12px;color:var(--ink-35);flex:1;min-width:0;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.status.ok{color:var(--good)}
-.status.err{color:var(--over)}
+.status{
+  display:flex;align-items:center;gap:7px;flex:1;min-width:0;
+  font-family:var(--mono);font-size:13px;color:var(--ink-60);
+}
+.status s{
+  width:9px;height:9px;border-radius:50%;flex:none;background:var(--ink-35);
+  transition:background .2s;
+}
+.status u{text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.status.ok{color:var(--good);font-weight:500}
+.status.ok s{background:var(--good)}
+.status.wait{color:var(--dawn)}
+.status.wait s{background:var(--dawn);animation:pulse 1s infinite}
+.status.err{color:var(--over);font-weight:500}
+.status.err s{background:var(--over)}
+@keyframes pulse{50%{opacity:.25}}
+#warn{
+  background:var(--over);color:#fff;padding:11px 14px;border-radius:6px;
+  margin:16px 0 0;font-size:13.5px;line-height:1.6;
+}
+#warn[hidden]{display:none}
+#localInfo{font-family:var(--mono);font-size:12px;color:var(--ink-60);margin:12px 0 0}
+.synczone{border-top:1px solid var(--line);padding:20px 0 4px}
+.btn.big{width:100%;padding:15px;font-size:16px;letter-spacing:.08em;border-radius:6px;font-weight:500}
+.btn.big:disabled{opacity:.5;cursor:default}
 
 button:focus-visible,textarea:focus-visible,input:focus-visible,summary:focus-visible{
   outline:2px solid var(--action);outline-offset:2px;border-radius:2px;
@@ -270,6 +291,8 @@ textarea:focus,input:focus{outline-offset:1px}
 </head>
 <body>
 <div class="wrap">
+
+  <div id="warn" hidden></div>
 
   <header class="masthead">
     <h1 class="brand">飲食日誌</h1>
@@ -324,6 +347,7 @@ textarea:focus,input:focus{outline-offset:1px}
     <div class="toolbody">
       <p class="hint">Markdown 適合 commit 進 repo；表格直接貼進 Notion 會自動變成表格區塊。<br>
       照片存在瀏覽器本機，本機下載的 .md 不會夾帶；推去 GitHub 才會一起上傳並附上圖片連結。</p>
+      <p id="localInfo">計算中…</p>
       <div class="btnrow">
         <button class="btn" data-x="md">下載當日 .md</button>
         <button class="btn" data-x="notion">複製 Notion 表格</button>
@@ -333,8 +357,8 @@ textarea:focus,input:focus{outline-offset:1px}
     </div>
   </details>
 
-  <details class="tool">
-    <summary>同步到 GitHub</summary>
+  <details class="tool" id="ghBox">
+    <summary>GitHub 設定（先填這裡）</summary>
     <div class="toolbody">
       <div class="field"><label for="gRepo">儲存庫</label><input id="gRepo" placeholder="username/diet-log"></div>
       <div class="field"><label for="gPath">檔案路徑</label><input id="gPath" placeholder="logs/{{date}}.md"></div>
@@ -351,16 +375,13 @@ textarea:focus,input:focus{outline-offset:1px}
     </div>
   </details>
 
-  <details class="tool">
-    <summary>同步到 Notion</summary>
-    <div class="toolbody">
-      <p class="hint">
-        Notion API 不接受瀏覽器直接呼叫（CORS 擋掉），所以走一段路：這個表單推到 GitHub，GitHub Actions 再寫進 Notion 資料庫。
-        設定檔和腳本都在附的 <code>README.md</code> 裡，複製過去就能跑。<br><br>
-        不想架 Action 的話，用上面的「複製 Notion 表格」手動貼也可以。
-      </p>
-    </div>
-  </details>
+  <section class="synczone">
+    <button class="btn solid big" id="syncAll">同步到 Notion</button>
+    <p class="hint">
+      一次做完：上傳照片 → 寫入當日紀錄 → 更新資料檔並觸發 Notion 同步。<br>
+      第一次用要先展開下面的 GitHub 設定填好儲存庫和權杖。
+    </p>
+  </section>
 
 </div>
 
@@ -368,7 +389,7 @@ textarea:focus,input:focus{outline-offset:1px}
 
 <div class="savebar">
   <div class="inner">
-    <span class="status" id="status">載入中…</span>
+    <span class="status" id="status"><s></s><u>載入中…</u></span>
     <button class="btn" id="clearDay">清空當日</button>
     <button class="btn solid" id="saveNow">儲存</button>
   </div>
@@ -420,7 +441,13 @@ let cfg = {repo:'',path:'logs/{{date}}.md',branch:'main',token:''};
 let saveTimer = null;
 
 const $ = s => document.querySelector(s);
-function say(msg, kind){ const el=$('#status'); el.textContent=msg; el.className='status'+(kind?' '+kind:''); }
+function say(msg, kind){
+  const el = $('#status');
+  el.querySelector('u').textContent = msg;
+  el.className = 'status' + (kind ? ' ' + kind : '');
+}
+const hhmm = () => { const t=new Date();
+  return String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'); };
 
 /* ── 照片 ── */
 async function shrink(file){
@@ -560,7 +587,8 @@ async function load(d){
   day = raw ? Object.assign(blank(), JSON.parse(raw)) : blank();
   if (!day.budget) day.budget = lastBudget;
   try{ shots = JSON.parse(await store.get(IMG(d)) || '{}'); }catch(e){ shots = {}; }
-  paint(); paintWeek(); say('　');
+  paint(); paintWeek(); localInfo();
+  say(raw ? `${d} 已有紀錄，共 ${photoCount()} 張照片` : `${d} 還是空白的`, raw ? 'ok' : '');
 }
 
 function isEmpty(){
@@ -570,13 +598,40 @@ function isEmpty(){
 }
 
 async function save(quiet){
-  if (isEmpty()){ await store.del(KEY(date)); paintWeek(); if(!quiet) say('這天是空的，沒有存檔'); return; }
-  const ok = await store.set(KEY(date), JSON.stringify(day));
-  paintWeek();
-  const t = new Date();
-  say(ok ? `已儲存 · ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}` : '存不進去，瀏覽器封鎖了儲存空間', ok?'ok':'err');
+  if (isEmpty()){
+    await store.del(KEY(date)); paintWeek(); localInfo();
+    if(!quiet) say('這天是空的，沒有存檔');
+    return true;
+  }
+  const body = JSON.stringify(day);
+  await store.set(KEY(date), body);
+  // 真的讀回來比對，寫入回報成功但其實沒進去的情況才抓得到
+  const back = await store.get(KEY(date));
+  const ok = back === body;
+  paintWeek(); localInfo();
+  say(ok ? `已儲存 ${hhmm()}　共 ${photoCount()} 張照片` : '存不進去，空間可能滿了', ok ? 'ok' : 'err');
+  return ok;
 }
-function queue(){ clearTimeout(saveTimer); say('編輯中…'); saveTimer = setTimeout(()=>save(true), 700); }
+const photoCount = () => Object.values(shots).reduce((a,x)=> a + (x?x.length:0), 0);
+function queue(){ clearTimeout(saveTimer); say('還沒存…', 'wait'); saveTimer = setTimeout(()=>save(true), 700); }
+
+/* ── 本機到底存了什麼 ── */
+async function localInfo(){
+  const el = $('#localInfo'); if (!el) return;
+  const dayKeys = await store.keys('diet:');
+  const imgKeys = await store.keys('dietimg:');
+  let bytes = 0, photos = 0;
+  for (const k of [...dayKeys, ...imgKeys]){
+    const v = await store.get(k) || '';
+    bytes += v.length;
+    if (k.startsWith('dietimg:')){
+      try{ photos += Object.values(JSON.parse(v)).reduce((a,x)=>a+x.length,0); }catch(e){}
+    }
+  }
+  el.textContent = dayKeys.length
+    ? `本機已存 ${dayKeys.length} 天、${photos} 張照片，約 ${(bytes/1048576).toFixed(2)} MB`
+    : '本機目前沒有任何紀錄';
+}
 
 /* ── events ── */
 document.addEventListener('input', e=>{
@@ -668,6 +723,7 @@ document.addEventListener('click', async e=>{
     day = blank(); day.budget = lastBudget; shots = {}; paint(); paintWeek(); say('已清空 '+date);
   }
   else if (t.dataset.x) exportAs(t.dataset.x);
+  else if (t.id==='syncAll') syncAll();
   else if (t.id==='push') push('md');
   else if (t.id==='pushJson') push('json');
 });
@@ -765,6 +821,81 @@ async function putFile(path, base64, head, msg){
   return `https://raw.githubusercontent.com/${cfg.repo}/${cfg.branch}/${path}`;
 }
 
+async function syncAll(){
+  clearTimeout(saveTimer);
+  await save(true);
+  readCfg();
+  if (!cfg.repo.includes('/') || !cfg.token){
+    $('#ghBox').open = true;
+    $('#ghBox').scrollIntoView({behavior:'smooth', block:'center'});
+    say('先填下面的儲存庫和權杖','err');
+    return;
+  }
+
+  const btn = $('#syncAll');
+  btn.disabled = true;
+  const label = btn.textContent;
+  btn.textContent = '同步中…';
+
+  const head  = { Authorization:'Bearer '+cfg.token, Accept:'application/vnd.github+json' };
+  const since = Date.now() - 15000;
+  const [y,m] = date.split('-');
+
+  try{
+    // 1. 照片
+    const urls = {}; let n = 0;
+    for (const meal of MEALS){
+      const list = shots[meal.id] || [];
+      for (let i = 0; i < list.length; i++){
+        n++; say(`上傳照片 ${n}…`, 'wait');
+        const path = `photos/${date}/${meal.id}-${i+1}.jpg`;
+        (urls[meal.id] ||= []).push(await putFile(path, list[i].split(',')[1], head, `照片 ${date}`));
+      }
+    }
+
+    // 2. 當日 Markdown
+    say('寫入當日紀錄…', 'wait');
+    const mdPath = cfg.path.replace(/\{\{date\}\}/g,date).replace(/\{\{yyyy\}\}/g,y).replace(/\{\{mm\}\}/g,m);
+    await putFile(mdPath, b64(table(date, day, urls)), head, `飲食紀錄 ${date}`);
+
+    // 3. 全量 JSON —— 這一步才會觸發 Action
+    say('觸發 Notion 同步…', 'wait');
+    const all = JSON.stringify(Object.fromEntries(await allDays()), null, 2);
+    await putFile('data/diet-log.json', b64(all), head, `更新資料 ${date}`);
+
+    await watchRun(head, since, n);
+  }catch(err){
+    say('同步失敗：' + err.message, 'err');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = label;
+  }
+}
+
+// 盯著 Action 跑完，權杖沒有 Actions 讀取權限就跳過
+async function watchRun(head, since, photos){
+  say('已送出，等 Action 跑完…', 'wait');
+  const url = `https://api.github.com/repos/${cfg.repo}/actions/runs?per_page=5`;
+  for (let i = 0; i < 20; i++){
+    await new Promise(r => setTimeout(r, i ? 6000 : 5000));
+    let res;
+    try{ res = await fetch(url, {headers:head}); }catch(e){ break; }
+    if (!res.ok) break;
+    const data = await res.json().catch(()=>null);
+    const run = data && data.workflow_runs &&
+      data.workflow_runs.find(r => Date.parse(r.created_at) >= since);
+    if (!run) continue;
+    if (run.status !== 'completed'){ say('Notion 同步中…', 'wait'); continue; }
+    if (run.conclusion === 'success'){
+      say(`已同步到 Notion${photos ? `，含 ${photos} 張照片` : ''}`, 'ok');
+    } else {
+      say('Action 失敗了，到 GitHub 的 Actions 分頁看訊息', 'err');
+    }
+    return;
+  }
+  say(`已送出${photos ? `，含 ${photos} 張照片` : ''}，Notion 約一分鐘後更新`, 'ok');
+}
+
 async function push(kind){
   await save(true); readCfg();
   if (!cfg.repo.includes('/') || !cfg.token){ say('先填好儲存庫和存取權杖','err'); return; }
@@ -823,7 +954,18 @@ darkMQ.addEventListener('change', ()=>{ if (theme === 'auto') applyTheme(); });
   $('#gRepo').value = cfg.repo; $('#gPath').value = cfg.path;
   $('#gBranch').value = cfg.branch; $('#gToken').value = cfg.token;
   await load(iso(new Date()));
-  say('　');
+
+  // 有些瀏覽器（無痕模式、內建瀏覽器）根本不給寫，先試一次才知道
+  const probe = 'diet-probe-' + Date.now();
+  await store.set(probe, 'x');
+  const echo = await store.get(probe);
+  await store.del(probe);
+  if (echo !== 'x'){
+    $('#warn').hidden = false;
+    $('#warn').textContent = '這個瀏覽器不讓網頁存資料，填的東西一離開就會不見。'
+      + '如果現在是無痕模式或從別的 App 內開啟的，請用 Safari 或 Chrome 直接開這個網址。';
+    say('無法儲存', 'err');
+  }
 })();
 document.addEventListener('keydown', e=>{ if (e.key === 'Escape') $('#lightbox').hidden = true; });
 window.addEventListener('beforeunload', ()=>{ if(saveTimer) save(true); });
