@@ -18,7 +18,7 @@ git init
 git add index.html
 git commit -m "飲食日誌"
 git branch -M main
-git remote add origin https://github.com/<你的帳號>/diet-log.git
+git remote add origin https://github.com/<你的帳號>/diet-records.git
 git push -u origin main
 ```
 
