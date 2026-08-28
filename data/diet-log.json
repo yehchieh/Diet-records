@@ -1,30 +1,29 @@
 {
   "2026-08-28": {
     "meals": {
-      "snack": {
-        "kcal": "",
-        "items": "西瓜"
-      },
       "dinner": {
-        "items": "氣炸雞胸肉、番茄、節瓜、花椰菜",
-        "kcal": "152",
-        "feel": "剛好"
-      },
-      "breakfast": {
-        "items": "芋頭饅頭、黑咖啡",
-        "kcal": "250",
+        "kcal": "125",
+        "items": "氣炸雞胸肉、節瓜、花椰菜、牛蕃茄",
         "feel": "剛好"
       },
       "lunch": {
+        "feel": "偏多",
         "items": "麻醬麵、花椰菜、蛋",
-        "kcal": "500",
-        "feel": "偏多"
+        "time": "13:30",
+        "kcal": "470"
+      },
+      "snack": {
+        "items": "西瓜"
+      },
+      "breakfast": {
+        "items": "芋頭饅頭、黑咖啡",
+        "feel": "剛好"
       }
     },
-    "water": 5,
+    "water": 0,
     "weight": "",
     "note": "",
-    "budget": "1450",
+    "budget": "1250",
     "photos": {
       "lunch": [
         "https://raw.githubusercontent.com/yehchieh/Diet-records/main/photos/2026-08-28/lunch-1.jpg"
