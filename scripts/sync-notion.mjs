@@ -23,7 +23,7 @@ async function api(path, method, body) {
     if (res.status === 401) throw new Error('金鑰無效或過期，重新產生一次 NOTION_TOKEN');
     if (res.status === 404) throw new Error('找不到資料庫。多半是沒把 integration 加進資料庫的 Connections，或 NOTION_DB_ID 填錯');
     if (res.status === 400 && text.includes('is not a property')) {
-      throw new Error('欄位名稱對不上。Notion 資料庫的欄位必須是：日期 記錄日 早餐 午餐 晚餐 點心 熱量 額度 剩餘 飲水 體重 備註\n原始訊息：' + text);
+      throw new Error('欄位名稱對不上。Notion 資料庫的欄位必須是：日期 記錄日 早餐 午餐 晚餐 點心 熱量 額度 剩餘 飲水 體重 備註 照片\n原始訊息：' + text);
     }
     throw new Error(`${method} ${path} → ${res.status}\n${text}`);
   }
@@ -38,6 +38,7 @@ function toProps(date, d) {
   const kcal = ['breakfast', 'lunch', 'dinner', 'snack']
     .reduce((a, k) => a + (parseInt(d.meals?.[k]?.kcal, 10) || 0), 0);
   const budget = parseInt(d.budget, 10) || 0;
+  const photos = Object.values(d.photos || {}).flat().filter(Boolean).slice(0, 20);
   return {
     '日期':   { title: [{ text: { content: date } }] },
     '記錄日': { date: { start: date } },
@@ -50,7 +51,10 @@ function toProps(date, d) {
     '剩餘':   num(budget ? budget - kcal : null),
     '飲水':   num(d.water),
     '體重':   num(d.weight),
-    '備註':   text(d.note)
+    '備註':   text(d.note),
+    '照片':   { files: photos.map((url, i) => ({
+                 type: 'external', name: `${date}-${i + 1}.jpg`, external: { url }
+               })) }
   };
 }
 
