@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>飲食日誌</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --paper:#FFF7EC;          /* 溫牛奶 */
+  --card:#FFFFFF;
+  --bar:rgba(255,247,236,.95);
+  --ink:#2E1B10;            /* 可可 */
+  --ink-60:#8A6249;
+  --ink-35:#C4A392;
+  --line:#F2DCC6;
+  --dawn:#FFA400;           /* 蛋黃金 */
+  --noon:#FF5B27;           /* 番茄橘紅 */
+  --dusk:#EC2A63;           /* 覆盆莓 */
+  --plum:#00B383;           /* 薄荷抹茶 */
+  --water:#12A9E0;          /* 汽水藍 */
+  --good:#12A150;
+  --over:#E8391B;
+  --action:#E8441F;
+  --on-accent:#FFFFFF;
+  --rail-op:.9;
+  --tint:6%;
+  --serif:"Noto Serif TC","Songti TC","PMingLiU",serif;
+  --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",monospace;
+}
+html[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#22150F;
+  --card:#2F1E16;
+  --bar:rgba(34,21,15,.95);
+  --ink:#FFEEDD;
+  --ink-60:#C4A08A;
+  --ink-35:#94705C;
+  --line:#4A2E22;
+  --dawn:#FFC03D;
+  --noon:#FF7A45;
+  --dusk:#FF5583;
+  --plum:#1FD9A2;
+  --water:#3FCBF5;
+  --good:#3ED47C;
+  --over:#FF6B4A;
+  --action:#FF6236;
+  --on-accent:#2A1508;
+  --rail-op:1;
+  --tint:12%;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:calc(96px + env(safe-area-inset-bottom));
+}
+.wrap{max-width:660px;margin:0 auto;padding:28px 20px 0}
+
+/* ── header ───────────────────────────── */
+.masthead{display:flex;align-items:center;gap:12px}
+.brand{font-family:var(--serif);font-weight:700;font-size:27px;letter-spacing:.06em;margin:0;margin-right:auto;color:var(--action)}
+.count{font-family:var(--mono);font-size:12px;color:var(--ink-35);letter-spacing:.04em}
+#themeBtn{border:1px solid var(--line);background:none;color:var(--ink-35);font-family:var(--sans);
+  font-size:11px;letter-spacing:.1em;padding:4px 9px;border-radius:2px;cursor:pointer}
+#themeBtn:hover{color:var(--ink);border-color:var(--ink-35)}
+
+.datebar{
+  display:flex;align-items:center;gap:10px;
+  margin-top:18px;padding:12px 8px;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+}
+.step{
+  width:34px;height:34px;flex:none;border:1px solid var(--line);background:transparent;
+  border-radius:50%;cursor:pointer;color:var(--ink-60);font-size:15px;line-height:1;
+}
+.step:hover{background:var(--card);color:var(--ink)}
+.dateblock{flex:1;text-align:center}
+.dateblock .d{font-family:var(--mono);font-size:19px;letter-spacing:.02em}
+.dateblock .w{font-size:12px;color:var(--ink-35);letter-spacing:.22em;margin-left:6px}
+#todayBtn{
+  border:none;background:none;font-family:var(--sans);font-size:12px;
+  color:var(--ink-35);cursor:pointer;letter-spacing:.1em;padding:4px 2px;
+}
+#todayBtn:hover{color:var(--action)}
+
+.week{display:flex;gap:4px;justify-content:center;margin:14px 0 4px}
+.week button{
+  flex:1;max-width:56px;padding:7px 0 6px;border:none;background:none;cursor:pointer;
+  font-family:var(--mono);font-size:11px;color:var(--ink-35);border-top:2px solid var(--line);
+}
+.week button.has{border-top-color:var(--good);color:var(--ink-60)}
+.week button.sel{border-top-color:var(--ink);color:var(--ink);font-weight:500}
+
+/* ── the day rail (signature) ─────────── */
+.rail{position:relative;margin:30px 0 8px;padding-left:34px}
+.rail::before{
+  content:"";position:absolute;left:9px;top:6px;bottom:34px;width:2px;border-radius:2px;
+  background:linear-gradient(to bottom,var(--dawn),var(--noon) 42%,var(--dusk) 78%,var(--plum));
+  opacity:var(--rail-op);
+}
+.meal{position:relative;margin-bottom:26px}
+.dot{
+  position:absolute;left:-34px;top:5px;width:20px;height:20px;border-radius:50%;
+  border:2.5px solid var(--c);background:var(--paper);
+  transition:background .25s ease,transform .25s ease;
+}
+.meal.filled .dot{background:var(--c);transform:scale(1.1)}
+
+.mhead{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.mname{font-family:var(--serif);font-weight:700;font-size:19px;letter-spacing:.1em;color:var(--c)}
+.mtime{
+  font-family:var(--mono);font-size:13px;color:var(--ink-60);
+  border:none;background:none;padding:2px 4px;border-bottom:1px dashed var(--line);
+}
+.mtime:hover{border-bottom-color:var(--c)}
+
+.card{
+  background:var(--card);
+  background:color-mix(in srgb,var(--c) var(--tint),var(--card));
+  border:1px solid var(--line);
+  border-color:color-mix(in srgb,var(--c) 30%,var(--line));
+  border-radius:8px;padding:12px 13px;
+}
+textarea.items{
+  width:100%;border:none;background:none;resize:vertical;min-height:62px;
+  font-family:var(--sans);font-size:15px;line-height:1.75;color:var(--ink);
+}
+textarea.items::placeholder{color:var(--ink-35)}
+.shots{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+.shot{
+  position:relative;width:66px;height:66px;border-radius:7px;overflow:hidden;
+  border:1px solid color-mix(in srgb,var(--c) 40%,var(--line));background:var(--paper);
+}
+.shot img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+.shot .del{
+  position:absolute;top:3px;right:3px;width:19px;height:19px;border-radius:50%;border:none;
+  background:rgba(20,10,5,.62);color:#fff;font-size:11px;line-height:19px;padding:0;cursor:pointer;
+}
+.addshot{
+  width:66px;height:66px;border:1.5px dashed var(--c);border-radius:7px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  color:var(--c);font-size:11px;letter-spacing:.05em;
+}
+.addshot b{font-size:19px;font-weight:400;line-height:1}
+.addshot:hover{background:color-mix(in srgb,var(--c) 12%,transparent)}
+#lightbox{
+  position:fixed;inset:0;z-index:60;background:rgba(24,12,6,.94);
+  display:flex;align-items:center;justify-content:center;padding:24px;cursor:zoom-out;
+}
+#lightbox[hidden]{display:none}
+#lightbox img{max-width:100%;max-height:100%;border-radius:6px}
+.mfoot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.kcal{
+  width:74px;font-family:var(--mono);font-size:13px;color:var(--ink);
+  border:1px solid var(--line);border-radius:2px;background:transparent;padding:5px 7px;
+}
+.seg{display:flex;border:1px solid var(--line);border-radius:2px;overflow:hidden;margin-left:auto}
+.seg button{
+  border:none;background:none;cursor:pointer;padding:5px 11px;font-size:12.5px;
+  font-family:var(--sans);color:var(--ink-35);border-left:1px solid var(--line);
+}
+.seg button:first-child{border-left:none}
+.seg button[aria-pressed="true"]{
+  background:var(--c);color:#fff;font-weight:700;
+  background:color-mix(in srgb,var(--c) 22%,transparent);
+  color:var(--c);border-color:var(--c);
+}
+
+/* ── day summary ──────────────────────── */
+.budget{border-top:1px solid var(--line);margin-top:6px;padding-top:20px}
+.brow{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.brow .set{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-35);margin-left:auto}
+#budgetIn{
+  font-weight:500;
+  width:82px;text-align:right;border:1px solid var(--line);border-radius:2px;background:var(--card);
+  padding:6px 8px;font-family:var(--mono);font-size:14px;color:var(--ink);
+}
+.bar{display:flex;height:15px;border:1px solid var(--line);border-radius:2px;background:var(--card);overflow:hidden}
+.bar i{display:block;height:100%;transition:width .3s ease}
+.nums{display:flex;gap:26px;margin-top:14px;align-items:flex-end}
+.nums div{display:flex;flex-direction:column-reverse;gap:2px}
+.nums b{font-family:var(--mono);font-weight:500;font-size:27px;line-height:1.15}
+.nums span{font-size:11.5px;letter-spacing:.2em;color:var(--ink-35)}
+.nums .left b{color:var(--good)}
+.nums .left.over b{color:var(--over)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-family:var(--mono);font-size:11.5px;color:var(--ink-35)}
+.legend span::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--c);margin-right:5px}
+#budgetHint{font-size:12px;color:var(--ink-35);line-height:1.7;margin:12px 0 0}
+.summary{border-top:1px solid var(--line);margin-top:22px;padding-top:20px}
+.row{display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+.lbl{font-size:12px;letter-spacing:.22em;color:var(--ink-35);width:52px;flex:none}
+.cups{display:flex;gap:6px}
+.cup{
+  width:26px;height:30px;border:1.5px solid var(--line);border-radius:2px 2px 8px 8px;
+  background:none;cursor:pointer;padding:0;transition:background .18s,border-color .18s;
+}
+.cup.on{background:var(--water);border-color:var(--water)}
+.cupnum{font-family:var(--mono);font-size:12px;color:var(--ink-35)}
+input.plain{
+  border:none;border-bottom:1px solid var(--line);background:none;padding:5px 2px;
+  font-family:var(--mono);font-size:14px;color:var(--ink);width:88px;
+}
+textarea.note{
+  width:100%;background:var(--card);border:1px solid var(--line);border-radius:3px;
+  padding:11px 12px;min-height:64px;resize:vertical;font-family:var(--sans);font-size:14.5px;color:var(--ink);
+}
+.total{font-family:var(--mono);font-size:13px;color:var(--ink-60)}
+
+/* ── tools ────────────────────────────── */
+details.tool{border-top:1px solid var(--line);padding:14px 0}
+details.tool summary{
+  cursor:pointer;list-style:none;font-size:13.5px;letter-spacing:.1em;color:var(--ink-60);
+}
+details.tool summary::-webkit-details-marker{display:none}
+details.tool summary::before{content:"＋ ";color:var(--ink-35)}
+details.tool[open] summary::before{content:"－ "}
+.toolbody{padding:14px 0 4px}
+.field{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.field label{font-size:12.5px;color:var(--ink-35);width:82px;flex:none}
+.field input{
+  flex:1;border:1px solid var(--line);border-radius:2px;background:var(--card);
+  padding:7px 9px;font-family:var(--mono);font-size:13px;color:var(--ink);min-width:0;
+}
+.hint{font-size:12.5px;color:var(--ink-35);line-height:1.7;margin:10px 0 0}
+.hint code{font-family:var(--mono);font-size:12px;background:var(--card);padding:1px 4px;border:1px solid var(--line)}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.btn{
+  border:1px solid var(--ink);background:none;color:var(--ink);cursor:pointer;
+  padding:9px 15px;border-radius:2px;font-family:var(--sans);font-size:13.5px;letter-spacing:.04em;
+}
+.btn:hover{background:var(--ink);color:var(--paper)}
+.btn.solid{background:var(--action);border-color:var(--action);color:#fff}
+html[data-theme="dark"] .btn.solid{color:var(--on-accent)}
+.btn.solid:hover{opacity:.86}
+
+/* ── save bar ─────────────────────────── */
+.savebar{
+  position:fixed;left:0;right:0;bottom:0;background:var(--bar);
+  backdrop-filter:blur(8px);border-top:1px solid var(--line);
+  padding:12px 20px calc(12px + env(safe-area-inset-bottom));
+}
+.savebar .inner{max-width:660px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.status{font-family:var(--mono);font-size:12px;color:var(--ink-35);flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.status.ok{color:var(--good)}
+.status.err{color:var(--over)}
+
+button:focus-visible,textarea:focus-visible,input:focus-visible,summary:focus-visible{
+  outline:2px solid var(--action);outline-offset:2px;border-radius:2px;
+}
+textarea:focus,input:focus{outline-offset:1px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:420px){
+  .seg{margin-left:0;width:100%}
+  .seg button{flex:1}
+  .cup{width:22px;height:26px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <h1 class="brand">飲食日誌</h1>
+    <span class="count" id="count"></span>
+    <button id="themeBtn" title="切換深淺色">自動</button>
+  </header>
+
+  <div class="datebar">
+    <button class="step" id="prev" aria-label="前一天">‹</button>
+    <div class="dateblock">
+      <div><span class="d" id="dateText"></span><span class="w" id="weekText"></span></div>
+      <button id="todayBtn">回到今天</button>
+    </div>
+    <button class="step" id="next" aria-label="後一天">›</button>
+  </div>
+  <nav class="week" id="week" aria-label="最近七天"></nav>
+
+  <main class="rail" id="rail"></main>
+
+  <section class="budget">
+    <div class="brow">
+      <span class="lbl">熱量</span>
+      <span class="set">今日可吃 <input id="budgetIn" inputmode="numeric" placeholder="—"> kcal</span>
+    </div>
+    <div class="bar" id="bar"></div>
+    <div class="nums">
+      <div><b id="eaten">0</b><span>已吃</span></div>
+      <div class="left" id="leftBox"><b id="left">—</b><span>還能吃</span></div>
+    </div>
+    <div class="legend" id="legend"></div>
+    <p id="budgetHint"></p>
+  </section>
+
+  <section class="summary">
+    <div class="row">
+      <span class="lbl">飲水</span>
+      <div class="cups" id="cups"></div>
+      <span class="cupnum" id="cupnum"></span>
+    </div>
+    <div class="row">
+      <span class="lbl">體重</span>
+      <input class="plain" id="weight" inputmode="decimal" placeholder="kg（可留空）">
+    </div>
+    <div class="row" style="display:block">
+      <span class="lbl" style="display:block;margin-bottom:8px">今日備註</span>
+      <textarea class="note" id="note" placeholder="身體感受、外食狀況、想調整的地方…"></textarea>
+    </div>
+  </section>
+
+  <details class="tool">
+    <summary>匯出這一天 / 全部紀錄</summary>
+    <div class="toolbody">
+      <p class="hint">Markdown 適合 commit 進 repo；表格直接貼進 Notion 會自動變成表格區塊。<br>
+      照片存在瀏覽器本機，本機下載的 .md 不會夾帶；推去 GitHub 才會一起上傳並附上圖片連結。</p>
+      <div class="btnrow">
+        <button class="btn" data-x="md">下載當日 .md</button>
+        <button class="btn" data-x="notion">複製 Notion 表格</button>
+        <button class="btn" data-x="csv">下載全部 .csv</button>
+        <button class="btn" data-x="json">下載全部 .json</button>
+      </div>
+    </div>
+  </details>
+
+  <details class="tool">
+    <summary>同步到 GitHub</summary>
+    <div class="toolbody">
+      <div class="field"><label for="gRepo">儲存庫</label><input id="gRepo" placeholder="username/diet-log"></div>
+      <div class="field"><label for="gPath">檔案路徑</label><input id="gPath" placeholder="logs/{{date}}.md"></div>
+      <div class="field"><label for="gBranch">分支</label><input id="gBranch" placeholder="main"></div>
+      <div class="field"><label for="gToken">存取權杖</label><input id="gToken" type="password" placeholder="github_pat_…"></div>
+      <p class="hint">
+        權杖只留在這台裝置的瀏覽器裡，不會送到別處。建議開 fine-grained token，範圍限這一個 repo、只給 <code>Contents: Read and write</code>。<br>
+        路徑可用 <code>{{date}}</code>、<code>{{yyyy}}</code>、<code>{{mm}}</code>。
+      </p>
+      <div class="btnrow">
+        <button class="btn solid" id="push">推送當日紀錄</button>
+        <button class="btn" id="pushJson">推送全部 JSON</button>
+      </div>
+    </div>
+  </details>
+
+  <details class="tool">
+    <summary>同步到 Notion</summary>
+    <div class="toolbody">
+      <p class="hint">
+        Notion API 不接受瀏覽器直接呼叫（CORS 擋掉），所以走一段路：這個表單推到 GitHub，GitHub Actions 再寫進 Notion 資料庫。
+        設定檔和腳本都在附的 <code>README.md</code> 裡，複製過去就能跑。<br><br>
+        不想架 Action 的話，用上面的「複製 Notion 表格」手動貼也可以。
+      </p>
+    </div>
+  </details>
+
+</div>
+
+<div id="lightbox" hidden><img alt="放大的餐點照片"></div>
+
+<div class="savebar">
+  <div class="inner">
+    <span class="status" id="status">載入中…</span>
+    <button class="btn" id="clearDay">清空當日</button>
+    <button class="btn solid" id="saveNow">儲存</button>
+  </div>
+</div>
+
+<script>
+/* ── storage：在 Claude 裡用 window.storage，其他地方（GitHub Pages）用 localStorage ── */
+const store = {
+  async get(k){
+    if (window.storage){ try{ const r = await window.storage.get(k); return r ? r.value : null; }catch(e){ return null; } }
+    try{ return localStorage.getItem(k); }catch(e){ return null; }
+  },
+  async set(k,v){
+    if (window.storage){ try{ await window.storage.set(k,v); return true; }catch(e){ return false; } }
+    try{ localStorage.setItem(k,v); return true; }catch(e){ return false; }
+  },
+  async del(k){
+    if (window.storage){ try{ await window.storage.delete(k); return true; }catch(e){ return false; } }
+    try{ localStorage.removeItem(k); return true; }catch(e){ return false; }
+  },
+  async keys(prefix){
+    if (window.storage){ try{ const r = await window.storage.list(prefix); return r ? r.keys : []; }catch(e){ return []; } }
+    try{ return Object.keys(localStorage).filter(k=>k.startsWith(prefix)); }catch(e){ return []; }
+  }
+};
+const KEY = d => 'diet:'+d;
+const IMG = d => 'dietimg:'+d;
+const MAX_SHOTS = 3;
+let shots = {};
+const CFG = 'diet-config';
+
+const MEALS = [
+  {id:'breakfast', name:'早餐',    time:'07:30', color:'var(--dawn)', ph:'例：燕麥粥、水煮蛋兩顆、黑咖啡'},
+  {id:'lunch',     name:'午餐',    time:'12:00', color:'var(--noon)', ph:'例：糙米飯、烤雞腿、燙青菜'},
+  {id:'dinner',    name:'晚餐',    time:'18:30', color:'var(--dusk)', ph:'例：味噌湯、鮭魚、豆腐'},
+  {id:'snack',     name:'點心・飲料', time:'',   color:'var(--plum)', ph:'例：無糖豆漿、一小把堅果'}
+];
+const FEELS = ['偏少','剛好','偏多'];
+const WEEKDAY = ['日','一','二','三','四','五','六'];
+
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const parse = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
+const blank = () => ({ meals:{}, water:0, weight:'', note:'', budget:'' });
+let lastBudget = '';
+
+let date = iso(new Date());
+let day = blank();
+let cfg = {repo:'',path:'logs/{{date}}.md',branch:'main',token:''};
+let saveTimer = null;
+
+const $ = s => document.querySelector(s);
+function say(msg, kind){ const el=$('#status'); el.textContent=msg; el.className='status'+(kind?' '+kind:''); }
+
+/* ── 照片 ── */
+async function shrink(file){
+  let src;
+  try{ src = await createImageBitmap(file, { imageOrientation:'from-image' }); }
+  catch(e){
+    src = await new Promise((res, rej)=>{
+      const i = new Image();
+      i.onload = ()=> res(i);
+      i.onerror = ()=> rej(new Error('讀不到這張圖'));
+      i.src = URL.createObjectURL(file);
+    });
+  }
+  const max = 1000, k = Math.min(1, max / Math.max(src.width, src.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(src.width * k); c.height = Math.round(src.height * k);
+  c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+  if (src.close) src.close();
+  return c.toDataURL('image/jpeg', 0.72);
+}
+
+function renderShots(id){
+  const list = shots[id] || [];
+  $('#shots-'+id).innerHTML =
+    list.map((src,i)=>`<div class="shot"><img src="${src}" data-zoom="${id}:${i}" alt="${id} 照片 ${i+1}"><button class="del" data-rm="${id}:${i}" aria-label="刪掉這張">✕</button></div>`).join('')
+    + (list.length < MAX_SHOTS
+        ? `<label class="addshot"><b>＋</b>照片<input type="file" accept="image/*" multiple hidden data-shot="${id}"></label>`
+        : '');
+  $('#m-'+id).classList.toggle('filled',
+    !!((day.meals[id]||{}).items||'').trim() || list.length > 0);
+}
+
+async function saveShots(){
+  const has = Object.values(shots).some(a=>a && a.length);
+  const ok = has ? await store.set(IMG(date), JSON.stringify(shots)) : await store.del(IMG(date));
+  if (!ok && has) say('照片存不下了，先推去 GitHub 再刪本機的','err');
+  return ok;
+}
+
+/* ── render ── */
+function buildRail(){
+  $('#rail').innerHTML = MEALS.map(m=>`
+    <section class="meal" id="m-${m.id}" style="--c:${m.color}">
+      <span class="dot"></span>
+      <div class="mhead">
+        <span class="mname">${m.name}</span>
+        <input class="mtime" type="time" data-f="time" data-m="${m.id}">
+      </div>
+      <div class="card">
+        <textarea class="items" data-f="items" data-m="${m.id}" placeholder="${m.ph}"></textarea>
+        <div class="shots" id="shots-${m.id}"></div>
+        <div class="mfoot">
+          <input class="kcal" data-f="kcal" data-m="${m.id}" inputmode="numeric" placeholder="kcal">
+          <div class="seg" role="group" aria-label="${m.name}份量">
+            ${FEELS.map(f=>`<button type="button" data-feel="${f}" data-m="${m.id}" aria-pressed="false">${f}</button>`).join('')}
+          </div>
+        </div>
+      </div>
+    </section>`).join('');
+}
+
+function paint(){
+  const d = parse(date);
+  $('#dateText').textContent = date;
+  $('#weekText').textContent = '週'+WEEKDAY[d.getDay()];
+
+  MEALS.forEach(m=>{
+    const v = day.meals[m.id] || {};
+    const sec = $('#m-'+m.id);
+    sec.querySelector('[data-f="time"]').value = v.time ?? m.time;
+    sec.querySelector('[data-f="items"]').value = v.items || '';
+    sec.querySelector('[data-f="kcal"]').value = v.kcal || '';
+    sec.querySelectorAll('[data-feel]').forEach(b=>
+      b.setAttribute('aria-pressed', String(v.feel === b.dataset.feel)));
+    sec.classList.toggle('filled', !!(v.items||'').trim());
+    renderShots(m.id);
+  });
+
+  $('#cups').innerHTML = Array.from({length:8},(_,i)=>
+    `<button class="cup${i<day.water?' on':''}" data-cup="${i+1}" aria-label="第${i+1}杯"></button>`).join('');
+  $('#cupnum').textContent = day.water + ' / 8 杯';
+  $('#weight').value = day.weight || '';
+  $('#note').value = day.note || '';
+  if ($('#budgetIn') !== document.activeElement) $('#budgetIn').value = day.budget || '';
+  paintBudget();
+}
+
+/* ── 熱量預算 ── */
+const kcalOf = id => parseInt((day.meals[id]||{}).kcal, 10) || 0;
+
+function paintBudget(){
+  const parts  = MEALS.map(m=>({ m, v: kcalOf(m.id) })).filter(x=>x.v > 0);
+  const eaten  = parts.reduce((a,x)=> a + x.v, 0);
+  const budget = parseInt(day.budget, 10) || 0;
+  const scale  = Math.max(budget, eaten, 1);
+
+  $('#bar').innerHTML = parts.map(x=>
+    `<i style="width:${(x.v/scale*100).toFixed(2)}%;background:${x.m.color}"></i>`).join('');
+  $('#eaten').textContent = eaten;
+
+  const box = $('#leftBox'), left = $('#left'), hint = $('#budgetHint');
+  if (!budget){
+    left.textContent = '—';
+    box.classList.remove('over');
+    box.querySelector('span').textContent = '還能吃';
+    hint.textContent = '填入今天的額度，這裡就會算剩下多少。數字會沿用到隔天，不用每天重打。';
+  } else {
+    const rest = budget - eaten;
+    box.classList.toggle('over', rest < 0);
+    left.textContent = rest < 0 ? '+' + Math.abs(rest) : rest;
+    box.querySelector('span').textContent = rest < 0 ? '超出' : '還能吃';
+    hint.textContent = budget < 1200
+      ? '這個額度偏低。一般成人光基礎代謝通常就超過這個數字，若打算長期這樣吃，建議先跟營養師或醫師確認過。'
+      : '';
+  }
+
+  $('#legend').innerHTML = parts.map(x=>
+    `<span style="--c:${x.m.color}">${x.m.name.replace('・飲料','')} ${x.v}</span>`).join('');
+}
+
+async function paintWeek(){
+  const keys = await store.keys('diet:');
+  const has = new Set(keys.map(k=>k.slice(5)));
+  $('#count').textContent = has.size ? has.size+' 天紀錄' : '';
+  const base = parse(date);
+  $('#week').innerHTML = Array.from({length:7},(_,i)=>{
+    const d = new Date(base); d.setDate(base.getDate()-3+i);
+    const s = iso(d);
+    return `<button data-go="${s}" class="${has.has(s)?'has ':''}${s===date?'sel':''}">${d.getDate()}</button>`;
+  }).join('');
+}
+
+/* ── load / save ── */
+async function load(d){
+  date = d;
+  const raw = await store.get(KEY(d));
+  day = raw ? Object.assign(blank(), JSON.parse(raw)) : blank();
+  if (!day.budget) day.budget = lastBudget;
+  try{ shots = JSON.parse(await store.get(IMG(d)) || '{}'); }catch(e){ shots = {}; }
+  paint(); paintWeek(); say('　');
+}
+
+function isEmpty(){
+  if (Object.values(shots).some(a=>a && a.length)) return false;
+  return !day.water && !day.weight.trim() && !day.note.trim() &&
+    MEALS.every(m=>{ const v=day.meals[m.id]||{}; return !(v.items||'').trim() && !(v.kcal||'').trim(); });
+}
+
+async function save(quiet){
+  if (isEmpty()){ await store.del(KEY(date)); paintWeek(); if(!quiet) say('這天是空的，沒有存檔'); return; }
+  const ok = await store.set(KEY(date), JSON.stringify(day));
+  paintWeek();
+  const t = new Date();
+  say(ok ? `已儲存 · ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}` : '存不進去，瀏覽器封鎖了儲存空間', ok?'ok':'err');
+}
+function queue(){ clearTimeout(saveTimer); say('編輯中…'); saveTimer = setTimeout(()=>save(true), 700); }
+
+/* ── events ── */
+document.addEventListener('input', e=>{
+  const t = e.target;
+  if (t.type === 'file') return;
+  if (t.dataset.m){
+    const v = day.meals[t.dataset.m] || (day.meals[t.dataset.m] = {});
+    v[t.dataset.f] = t.value;
+    if (t.dataset.f==='items')
+      $('#m-'+t.dataset.m).classList.toggle('filled',
+        !!t.value.trim() || (shots[t.dataset.m]||[]).length > 0);
+    if (t.dataset.f==='kcal') paintBudget();
+    queue();
+  } else if (t.id==='budgetIn'){
+    const clean = t.value.replace(/[^0-9]/g,'').slice(0,5);
+    if (t.value !== clean) t.value = clean;
+    day.budget = clean;
+    lastBudget = clean;
+    store.set('diet-budget', clean);
+    paintBudget(); queue();
+  }
+  else if (t.id==='weight'){ day.weight = t.value; queue(); }
+  else if (t.id==='note'){ day.note = t.value; queue(); }
+  else if (t.id.startsWith('g')){ readCfg(); store.set(CFG, JSON.stringify(cfg)); }
+});
+document.addEventListener('change', async e=>{
+  const t = e.target;
+  if (!t.dataset.shot) return;
+  const id = t.dataset.shot;
+  const files = [...t.files].filter(f=> f.type.startsWith('image/'));
+  t.value = '';
+  if (!files.length) return;
+
+  const list = shots[id] || (shots[id] = []);
+  const room = MAX_SHOTS - list.length;
+  if (files.length > room) say(`一餐最多 ${MAX_SHOTS} 張，只收前 ${room} 張`);
+  say('處理照片中…');
+  for (const f of files.slice(0, room)){
+    try{ list.push(await shrink(f)); }
+    catch(err){ say('這張讀不進來：'+err.message,'err'); }
+  }
+  renderShots(id);
+  const ok = await saveShots();
+  if (ok) { await save(true); say('照片已加上','ok'); }
+});
+
+document.addEventListener('click', async e=>{
+  const zoom = e.target.closest('[data-zoom]');
+  if (zoom){
+    const box = $('#lightbox');
+    box.querySelector('img').src = zoom.getAttribute('src');
+    box.hidden = false;
+    return;
+  }
+  if (e.target.closest('#lightbox')){ $('#lightbox').hidden = true; return; }
+
+  const t = e.target.closest('button'); if(!t) return;
+
+  if (t.dataset.rm){
+    const [id, i] = t.dataset.rm.split(':');
+    shots[id].splice(+i, 1);
+    if (!shots[id].length) delete shots[id];
+    renderShots(id);
+    await saveShots();
+    say('已刪掉一張');
+    return;
+  }
+  if (t.dataset.feel){
+    const v = day.meals[t.dataset.m] || (day.meals[t.dataset.m] = {});
+    v.feel = (v.feel === t.dataset.feel) ? '' : t.dataset.feel;
+    paint(); queue();
+  }
+  else if (t.dataset.cup){
+    const n = +t.dataset.cup;
+    day.water = (day.water === n) ? n-1 : n;
+    paint(); queue();
+  }
+  else if (t.dataset.go){ await save(true); load(t.dataset.go); }
+  else if (t.id==='prev' || t.id==='next'){
+    await save(true);
+    const d = parse(date); d.setDate(d.getDate() + (t.id==='next'?1:-1)); load(iso(d));
+  }
+  else if (t.id==='todayBtn'){ await save(true); load(iso(new Date())); }
+  else if (t.id==='themeBtn'){ theme = THEMES[(THEMES.indexOf(theme)+1)%3]; store.set(THEME_KEY, theme); applyTheme(); }
+  else if (t.id==='saveNow'){ clearTimeout(saveTimer); save(); }
+  else if (t.id==='clearDay'){
+    if (!confirm(date+' 的紀錄會被清掉，確定嗎？')) return;
+    await store.del(KEY(date)); await store.del(IMG(date));
+    day = blank(); day.budget = lastBudget; shots = {}; paint(); paintWeek(); say('已清空 '+date);
+  }
+  else if (t.dataset.x) exportAs(t.dataset.x);
+  else if (t.id==='push') push('md');
+  else if (t.id==='pushJson') push('json');
+});
+
+/* ── export ── */
+function totals(o){
+  const eaten  = MEALS.reduce((a,m)=> a + (parseInt((o.meals[m.id]||{}).kcal,10)||0), 0);
+  const budget = parseInt(o.budget,10) || 0;
+  return { eaten, budget, rest: budget ? budget - eaten : null };
+}
+function table(d, o, imgs){
+  const t = totals(o);
+  const rows = MEALS.map(m=>{
+    const v = o.meals[m.id] || {};
+    return `| ${m.name} | ${v.time||'—'} | ${(v.items||'—').replace(/\n/g,'、')} | ${v.kcal||'—'} | ${v.feel||'—'} |`;
+  }).join('\n');
+  const w = parse(d);
+  return `# ${d}（週${WEEKDAY[w.getDay()]}）飲食紀錄\n\n`
+    + `| 餐別 | 時間 | 內容 | 熱量 | 份量 |\n|---|---|---|---|---|\n${rows}\n\n`
+    + `- 熱量：已吃 ${t.eaten} kcal`
+    + (t.budget ? `／額度 ${t.budget} kcal／${t.rest < 0 ? '超出 '+Math.abs(t.rest) : '剩餘 '+t.rest} kcal\n` : '\n')
+    + `- 飲水：${o.water} / 8 杯\n- 體重：${o.weight||'—'}\n- 備註：${o.note||'—'}\n`
+    + (imgs && Object.keys(imgs).length
+        ? '\n## 照片\n\n' + MEALS.filter(m=>imgs[m.id]).map(m=>
+            `**${m.name}**\n\n` + imgs[m.id].map(u=>`![${m.name}](${u})`).join('\n')).join('\n\n') + '\n'
+        : '');
+}
+async function allDays(){
+  const keys = await store.keys('diet:');
+  const out = [];
+  for (const k of keys.sort()){
+    const raw = await store.get(k);
+    if (raw) out.push([k.slice(5), Object.assign(blank(), JSON.parse(raw))]);
+  }
+  return out;
+}
+function download(name, text, type){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text],{type:type+';charset=utf-8'}));
+  a.download = name; a.click(); URL.revokeObjectURL(a.href);
+}
+async function exportAs(kind){
+  await save(true);
+  if (kind==='md'){ download(date+'.md', table(date, day), 'text/markdown'); say('已下載 '+date+'.md','ok'); }
+  else if (kind==='notion'){
+    try{ await navigator.clipboard.writeText(table(date, day)); say('已複製，貼進 Notion 就是表格','ok'); }
+    catch(err){ say('瀏覽器不給複製，請用下載 .md','err'); }
+  }
+  else if (kind==='csv'){
+    const days = await allDays();
+    const esc = s => `"${String(s??'').replace(/"/g,'""')}"`;
+    const lines = ['日期,餐別,時間,內容,熱量,份量,當日額度,當日已吃,當日剩餘,飲水,體重,備註'];
+    days.forEach(([d,o])=>{
+      const t = totals(o);
+      MEALS.forEach(m=>{
+        const v = o.meals[m.id] || {};
+        lines.push([d,m.name,v.time||'',v.items||'',v.kcal||'',v.feel||'',
+          t.budget||'',t.eaten,t.rest===null?'':t.rest,
+          o.water,o.weight||'',o.note||''].map(esc).join(','));
+      });
+    });
+    download('diet-log.csv','\uFEFF'+lines.join('\n'),'text/csv');
+    say(`已匯出 ${days.length} 天`,'ok');
+  }
+  else if (kind==='json'){
+    const days = await allDays();
+    download('diet-log.json', JSON.stringify(Object.fromEntries(days), null, 2), 'application/json');
+    say(`已匯出 ${days.length} 天`,'ok');
+  }
+}
+
+/* ── GitHub ── */
+function readCfg(){
+  cfg = { repo:$('#gRepo').value.trim(), path:$('#gPath').value.trim()||'logs/{{date}}.md',
+          branch:$('#gBranch').value.trim()||'main', token:$('#gToken').value.trim() };
+}
+function b64(str){
+  const bytes = new TextEncoder().encode(str);
+  let bin=''; bytes.forEach(b=> bin += String.fromCharCode(b));
+  return btoa(bin);
+}
+async function putFile(path, base64, head, msg){
+  const url = `https://api.github.com/repos/${cfg.repo}/contents/${path}`;
+  let sha;
+  const probe = await fetch(`${url}?ref=${encodeURIComponent(cfg.branch)}`, {headers:head});
+  if (probe.ok) sha = (await probe.json()).sha;
+  else if (probe.status === 401) throw new Error('權杖無效或已過期');
+  else if (probe.status === 403) throw new Error('權杖權限不足，需要 Contents 寫入');
+  const res = await fetch(url, { method:'PUT', headers:{...head,'Content-Type':'application/json'},
+    body: JSON.stringify({ message: msg, content: base64, branch: cfg.branch, ...(sha?{sha}:{}) }) });
+  if (!res.ok){
+    const e = await res.json().catch(()=>({}));
+    throw new Error(e.message || ('HTTP '+res.status));
+  }
+  return `https://raw.githubusercontent.com/${cfg.repo}/${cfg.branch}/${path}`;
+}
+
+async function push(kind){
+  await save(true); readCfg();
+  if (!cfg.repo.includes('/') || !cfg.token){ say('先填好儲存庫和存取權杖','err'); return; }
+  const [y,m] = date.split('-');
+  const head = { Authorization:'Bearer '+cfg.token, Accept:'application/vnd.github+json' };
+  say('推送中…');
+  try{
+    if (kind === 'json'){
+      const body = JSON.stringify(Object.fromEntries(await allDays()), null, 2);
+      await putFile('data/diet-log.json', b64(body), head, `飲食紀錄全量 ${date}`);
+      say('已推上 data/diet-log.json','ok');
+      return;
+    }
+
+    // 先把照片放上去，拿到網址再寫進 Markdown
+    const urls = {};
+    let n = 0;
+    for (const meal of MEALS){
+      const list = shots[meal.id] || [];
+      for (let i = 0; i < list.length; i++){
+        n++;
+        say(`上傳照片 ${n}…`);
+        const p = `photos/${date}/${meal.id}-${i+1}.jpg`;
+        (urls[meal.id] ||= []).push(await putFile(p, list[i].split(',')[1], head, `照片 ${date} ${meal.name}`));
+      }
+    }
+
+    const path = cfg.path.replace(/\{\{date\}\}/g,date).replace(/\{\{yyyy\}\}/g,y).replace(/\{\{mm\}\}/g,m);
+    await putFile(path, b64(table(date, day, urls)), head, `飲食紀錄 ${date}`);
+    say(n ? `已推上 ${path}，含 ${n} 張照片` : '已推上 '+path, 'ok');
+  }catch(err){ say('推送失敗：'+err.message,'err'); }
+}
+
+/* ── 深淺色 ── */
+const THEMES = ['auto','light','dark'];
+const THEME_KEY = 'diet-theme';
+const darkMQ = window.matchMedia('(prefers-color-scheme: dark)');
+let theme = 'auto';
+function applyTheme(){
+  const dark = theme === 'dark' || (theme === 'auto' && darkMQ.matches);
+  // 一律明確標記，瀏覽器才不會自己去反轉顏色
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  $('#themeBtn').textContent = theme === 'auto' ? '自動' : (dark ? '深色' : '淺色');
+}
+darkMQ.addEventListener('change', ()=>{ if (theme === 'auto') applyTheme(); });
+
+/* ── boot ── */
+(async function(){
+  lastBudget = (await store.get('diet-budget')) || '';
+  theme = (await store.get(THEME_KEY)) || 'auto';
+  if (!THEMES.includes(theme)) theme = 'auto';
+  applyTheme();
+  buildRail();
+  const raw = await store.get(CFG);
+  if (raw){ try{ Object.assign(cfg, JSON.parse(raw)); }catch(e){} }
+  $('#gRepo').value = cfg.repo; $('#gPath').value = cfg.path;
+  $('#gBranch').value = cfg.branch; $('#gToken').value = cfg.token;
+  await load(iso(new Date()));
+  say('　');
+})();
+document.addEventListener('keydown', e=>{ if (e.key === 'Escape') $('#lightbox').hidden = true; });
+window.addEventListener('beforeunload', ()=>{ if(saveTimer) save(true); });
+</script>
+</body>
+</html>
