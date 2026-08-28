@@ -432,7 +432,7 @@ const WEEKDAY = ['日','一','二','三','四','五','六'];
 
 const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const parse = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
-const blank = () => ({ meals:{}, water:0, weight:'', note:'', budget:'' });
+const blank = () => ({ meals:{}, water:0, weight:'', note:'', budget:'', photos:null });
 let lastBudget = '';
 
 let date = iso(new Date());
@@ -852,6 +852,10 @@ async function syncAll(){
         (urls[meal.id] ||= []).push(await putFile(path, list[i].split(',')[1], head, `照片 ${date}`));
       }
     }
+
+    // 照片網址寫回當日紀錄，下一步的 JSON 才帶得進 Notion
+    day.photos = n ? urls : null;
+    await store.set(KEY(date), JSON.stringify(day));
 
     // 2. 當日 Markdown
     say('寫入當日紀錄…', 'wait');
