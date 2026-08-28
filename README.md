@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/31555245/README.md)
+[README.md](https://github.com/user-attachments/files/31556715/README.md)
 # 飲食日誌 · 三餐紀錄表單
 
 一頁式的三餐紀錄表單。開著就能填，資料存在瀏覽器本機，需要時才推到 GitHub，再由 GitHub Actions 寫進 Notion 資料庫。
@@ -18,7 +18,7 @@ git init
 git add index.html
 git commit -m "飲食日誌"
 git branch -M main
-git remote add origin https://github.com/<你的帳號>/diet-records.git
+git remote add origin https://github.com/<你的帳號>/diet-log.git
 git push -u origin main
 ```
 
