@@ -1,10 +1,30 @@
 {
-  "2026-08-27": {
-    "meals": {},
-    "water": 0,
+  "2026-08-31": {
+    "meals": {
+      "breakfast": {
+        "items": "芋頭饅頭、熱美式",
+        "kcal": "373",
+        "feel": "剛好"
+      },
+      "lunch": {
+        "items": "全聯高鐵糖醋便當129",
+        "kcal": "650",
+        "feel": "偏多"
+      },
+      "dinner": {
+        "items": "氣炸節瓜、雞胸肉、牛蕃茄\n豆漿、藍莓、香蕉",
+        "feel": "偏多",
+        "kcal": "206"
+      }
+    },
+    "water": 4,
     "weight": "",
     "note": "",
-    "budget": "",
-    "photos": null
+    "budget": "1400",
+    "photos": {
+      "lunch": [
+        "https://raw.githubusercontent.com/yehchieh/Diet-records/main/photos/2026-08-31/lunch-1.jpg"
+      ]
+    }
   }
 }
