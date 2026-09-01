@@ -26,5 +26,36 @@
         "https://raw.githubusercontent.com/yehchieh/Diet-records/main/photos/2026-08-31/lunch-1.jpg"
       ]
     }
+  },
+  "2026-09-01": {
+    "meals": {
+      "breakfast": {
+        "items": "芋頭饅頭、黑咖啡",
+        "kcal": "368",
+        "feel": "剛好"
+      },
+      "lunch": {
+        "kcal": "576",
+        "items": "糙米飯、雞胸肉、花椰菜、蛋",
+        "feel": "偏多"
+      },
+      "dinner": {
+        "kcal": "415",
+        "items": "關廟Q拉麵、大陸妹、里肌肉、蛋",
+        "feel": "偏多"
+      }
+    },
+    "water": 5,
+    "weight": "",
+    "note": "",
+    "budget": "1400",
+    "photos": {
+      "breakfast": [
+        "https://raw.githubusercontent.com/yehchieh/Diet-records/main/photos/2026-09-01/breakfast-1.jpg"
+      ],
+      "lunch": [
+        "https://raw.githubusercontent.com/yehchieh/Diet-records/main/photos/2026-09-01/lunch-1.jpg"
+      ]
+    }
   }
 }
