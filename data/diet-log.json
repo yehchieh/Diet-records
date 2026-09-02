@@ -57,5 +57,23 @@
         "https://raw.githubusercontent.com/yehchieh/Diet-records/main/photos/2026-09-01/lunch-1.jpg"
       ]
     }
+  },
+  "2026-09-02": {
+    "meals": {
+      "breakfast": {
+        "items": "地瓜、雞蛋*2、美式",
+        "kcal": "247",
+        "feel": "剛好"
+      }
+    },
+    "water": 0,
+    "weight": "",
+    "note": "",
+    "budget": "1400",
+    "photos": {
+      "breakfast": [
+        "https://raw.githubusercontent.com/yehchieh/Diet-records/main/photos/2026-09-02/breakfast-1.jpg"
+      ]
+    }
   }
 }
